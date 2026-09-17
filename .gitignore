@@ -13,3 +13,5 @@ data/faiss_index/
 *.index
 .env
 .env.*
+generated_website/
+project_requirements.txt
