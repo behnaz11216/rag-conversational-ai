@@ -195,7 +195,7 @@ into a structured conversation covering project type, audience, design style, fe
 
 This repository intentionally excludes:
 
-- NERA proprietary source code
+- Proprietary company source code
 - Internal company documents
 - Confidential prompts
 - API keys or credentials
