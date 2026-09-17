@@ -111,8 +111,6 @@ The public repository focuses on the local, reproducible RAG workflow. Company-s
 
 ## Project Structure
 
-
-````markdown
 ```text
 rag-conversational-ai/
 ├── config/
@@ -127,6 +125,15 @@ rag-conversational-ai/
 ├── .gitignore
 ├── README.md
 └── requirements.txt
+```
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/behnaz11216/rag-conversational-ai.git
+cd rag-conversational-ai
+```
 
 ### 2. Create an environment
 
