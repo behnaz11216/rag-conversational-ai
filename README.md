@@ -111,6 +111,8 @@ The public repository focuses on the local, reproducible RAG workflow. Company-s
 
 ## Project Structure
 
+
+````markdown
 ```text
 rag-conversational-ai/
 ├── config/
