@@ -126,15 +126,6 @@ rag-conversational-ai/
 ├── README.md
 └── requirements.txt
 
-## Installation
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/behnaz11216/rag-conversational-ai.git
-cd rag-conversational-ai
-```
-
 ### 2. Create an environment
 
 ```bash
