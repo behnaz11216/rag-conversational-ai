@@ -121,10 +121,10 @@ rag-conversational-ai/
 │   └── architecture.md
 ├── src/
 │   └── rag_app.py
+├── website_generator.py
 ├── .gitignore
 ├── README.md
 └── requirements.txt
-```
 
 ## Installation
 
