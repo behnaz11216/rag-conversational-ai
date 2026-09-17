@@ -1,0 +1,13 @@
+model:
+  name: llama3.1:8b
+  temperature: 0.4
+  top_p: 0.8
+  repeat_penalty: 1.1
+embeddings:
+  name: all-MiniLM-L6-v2
+retrieval:
+  chunk_size: 1000
+  chunk_overlap: 100
+paths:
+  source_pdf: data/source.pdf
+  faiss_index: data/faiss_index
