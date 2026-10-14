@@ -1,209 +1,122 @@
 # RAG Conversational AI Assistant
 
-A portfolio-safe implementation of a Retrieval-Augmented Generation (RAG) conversational assistant for structured website/app requirement gathering.
+A chat assistant that helps a business owner plan a website. It asks one question at a time
+(name, type of website, goal, audience, style, features, content and technical needs) and
+at the end it saves a short summary of the requirements.
 
-The system combines semantic retrieval with a local large language model to keep conversations grounded in a domain-specific knowledge base while progressively collecting project requirements.
+It uses RAG: during the conversation it searches a small PDF about web design and uses what it
+finds to ask better questions, and to give options when the user is not sure.
 
-> **Portfolio note:** This repository is a clean, public-facing adaptation of techniques used in an academic/industry project. It does not include proprietary company code, documents, credentials, internal prompts, datasets, or infrastructure.
+Everything runs locally with Llama 3.1 8B through Ollama.
 
-## Architecture
+> This is a simplified public version of a project I worked on during my internship.
+> It does not contain any company code, documents or prompts.
+
+## How it works
 
 ```mermaid
 flowchart LR
-    A[PDF Knowledge Base] --> B[Document Loading]
-    B --> C[Chunking]
-    C --> D[SentenceTransformers Embeddings]
-    D --> E[FAISS Vector Store]
-    U[User Conversation] --> F[Requirement Tracking]
-    F --> G[Semantic Retrieval]
-    E --> G
-    G --> H[Retrieved Context]
-    H --> I[Llama 3.1 8B via Ollama]
-    F --> I
-    I --> J[Adaptive Follow-up / Project Summary]
+    A[source.pdf] --> B[Chunks]
+    B --> C[Embeddings<br/>all-MiniLM-L6-v2]
+    C --> D[(FAISS index)]
+    U[User answer] --> E[Read the answer<br/>temperature 0, JSON]
+    E --> F[Project details]
+    F --> G[Write the next question<br/>temperature 0.4]
+    D -->|related chunks| G
+    G --> U
 ```
 
-## Key Features
+1. **Knowledge base.** The PDF is split into chunks, turned into embeddings and stored in a FAISS
+   index. The index is saved in `data/faiss_index`, so it is only built on the first run.
+2. **Reading the answer.** The model takes the part of the answer that matters and says if the user
+   really answered. If the user is not sure, or answers with a question, the assistant asks again
+   and offers two or three options from the PDF.
+3. **Asking the next question.** The model gets the answers so far and the related parts of the PDF,
+   and writes one short question.
+4. **Summary.** At the end the answers are printed and saved to `project_requirements.txt`.
 
-- PDF-based knowledge ingestion with `PyPDFLoader`
-- Recursive text chunking
-- Dense semantic embeddings with SentenceTransformers
-- Local vector search with FAISS
-- Local Llama 3.1 8B inference through Ollama
-- Conversational requirement tracking
-- One-question-at-a-time adaptive follow-up generation
-- Basic input validation and structured project summaries
-- Persistent FAISS index to avoid recomputing embeddings
-- Configurable model generation parameters
+## Model settings
 
-## Technology Stack
+The same model is used with two different settings, because the two tasks are different:
 
-| Area | Technologies |
-|---|---|
-| Language | Python |
-| LLM | Llama 3.1 8B |
-| LLM Runtime | Ollama |
-| RAG | LangChain, FAISS |
-| Embeddings | SentenceTransformers |
-| Document Processing | PyPDFLoader, RecursiveCharacterTextSplitter |
-| ML / Deep Learning | PyTorch |
-| Development | Git, Docker-ready structure |
+| Task | Settings | Why |
+|---|---|---|
+| Reading the answer | `temperature=0`, `format="json"` | There is only one correct result, so no randomness |
+| Writing the question | `temperature=0.4`, `top_p=0.9`, `top_k=40`, `repeat_penalty=1.1` | The question should sound natural |
 
-## Conversation Flow
+The code also checks the model's output instead of trusting it:
 
-The assistant progressively collects structured project information such as:
+- the extracted value must really be in the user's answer, otherwise the full answer is saved
+- only the first question is kept, and if there is no usable question, a simple fixed one is used
 
-- Product / project name
-- Project type
-- Purpose
-- Target audience
-- Design style
-- Core features
-- Content needs
-- Technical requirements
-- Special requests
+## Run it
 
-The conversational component maintains history and adapts the next question to the current topic and previous user response.
+1. Install [Ollama](https://ollama.com) and download the model:
 
-## Retrieval Pipeline
+   ```bash
+   ollama pull llama3.1:8b
+   ```
 
-1. Load a PDF knowledge source.
-2. Split the document into overlapping chunks.
-3. Generate dense embeddings for each chunk.
-4. Build a FAISS vector index.
-5. Retrieve semantically relevant chunks for the conversation.
-6. Pass retrieved context together with the conversation state to the LLM.
-7. Generate a focused follow-up question or a structured project summary.
+2. Install the Python packages:
 
-## Research Evaluation
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-The associated master's thesis evaluated the conversational assistant across 18 user dialogues.
+3. Run it from the project folder:
 
-Reported results included:
+   ```bash
+   python src/rag_app.py
+   ```
 
-- **89% requirement completeness**
-- **0.87 average semantic fidelity**
-- **4.4/5 follow-up relevance**
-
-The generated website artifacts were also evaluated separately, including a **4.7/5 design-fidelity rating** and approximately **92% functional-requirement coverage** in the reported case study.
-
-These figures describe the thesis evaluation and are **not automatically reproducible from this public repository**, because the original evaluation data, proprietary knowledge base, and company-specific implementation are intentionally excluded.
-
-## Local vs. Cloud Architecture
-
-The broader research compared a local deployment with a cloud-oriented architecture.
-
-### Local
-
-- Ollama
-- Llama 3.1 8B
-- SentenceTransformers
-- FAISS
-- LangChain
-
-### Cloud research environment
-
-- Google Vertex AI
-- AlloyDB / pgvector
-- Cloud infrastructure for scalable retrieval and generation
-
-The public repository focuses on the local, reproducible RAG workflow. Company-specific cloud configuration and credentials are not included.
-
-## Project Structure
-
-```text
-rag-conversational-ai/
-├── config/
-│   └── config.example.yml
-├── data/
-│   └── README.md
-├── docs/
-│   └── architecture.md
-├── src/
-│   └── rag_app.py
-├── website_generator.py
-├── .gitignore
-├── README.md
-└── requirements.txt
-```
-## Installation
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/behnaz11216/rag-conversational-ai.git
-cd rag-conversational-ai
-```
-
-### 2. Create an environment
-
-```bash
-python -m venv .venv
-```
-
-Windows:
-
-```bash
-.venv\\Scripts\\activate
-```
-
-macOS / Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Install and start Ollama
-
-Install Ollama separately and pull the model:
-
-```bash
-ollama pull llama3.1:8b
-```
-
-### 5. Add your own knowledge-base PDF
-
-Place a non-confidential PDF in:
-
-```text
-data/source.pdf
-```
-
-Do not upload proprietary company documents.
-
-### 6. Run
-
-```bash
-python src/rag_app.py
-```
+Type `exit` to stop at any time. To use another Ollama model, set the `OLLAMA_MODEL`
+environment variable, for example `OLLAMA_MODEL=qwen2.5:1.5b`.
 
 ## Example
 
-The assistant can turn a broad idea such as:
+Part of a test run (with the small `qwen2.5:1.5b` model):
 
-> "I want to build an online bookstore."
+```text
+Assistant: ... First, what is the name of your project or business? 😊
+You: BOOKAPO
+Assistant: What kind of website are you envisioning for BOOKAPO?
+You: an online bookstore
+...
+Assistant: What kind of visual style do you envision for your online bookstore?
+You: I am not sure
+Assistant: You mentioned that you're unsure about the visual style for your online bookstore project.
+Would you prefer a minimalist approach with generous whitespace, limited decorative elements, and a
+restrained color palette?
+You: minimal
+```
 
-into a structured conversation covering project type, audience, design style, features, content, and technical requirements.
+The options in the last question come from the PDF (section "Visual Design Principles").
 
-## Responsible Publication
+## Project structure
 
-This repository intentionally excludes:
+```text
+rag-conversational-ai/
+├── data/
+│   ├── README.md
+│   └── source.pdf      # knowledge base for RAG
+├── src/
+│   └── rag_app.py      # the whole app
+├── requirements.txt
+└── README.md
+```
 
-- Proprietary company source code
-- Internal company documents
-- Confidential prompts
-- API keys or credentials
-- Internal datasets
-- Private infrastructure configuration
-- Unpublished company-specific evaluation data
+## Research results
 
-The repository is intended to demonstrate the engineering concepts, architecture, and implementation skills behind the work while respecting confidentiality.
+The full system was evaluated in the associated master's thesis across 18 user dialogues:
+
+- **89%** requirement completeness
+- **0.87** average semantic fidelity
+- **4.4/5** follow-up relevance
+
+The thesis also evaluated websites generated from the collected requirements (4.7/5 design
+fidelity, about 92% of functional requirements covered) and compared this local setup with a
+cloud setup (Vertex AI, AlloyDB/pgvector). Website generation and the cloud setup are not part of
+this repository, so these numbers can't be reproduced from this simplified version.
 
 ## Author
 

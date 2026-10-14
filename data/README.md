@@ -1,11 +1,8 @@
 # Data
 
-Place a **non-confidential** PDF knowledge source here as:
+`source.pdf` is the knowledge base the assistant searches during the conversation.
+It is a short, generic guide about website types, design styles and common features.
+It was made for this public version and is not a company document.
 
-```text
-data/source.pdf
-```
-
-The original industry/project knowledge base is intentionally not included in this public repository.
-
-Do not add company documents, customer data, credentials, API keys, internal prompts, or proprietary datasets.
+You can replace it with your own PDF. After that, delete the `faiss_index/` folder,
+so the index is built again from the new file on the next run.

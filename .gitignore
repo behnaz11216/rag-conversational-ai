@@ -8,6 +8,7 @@ env/
 .DS_Store
 Thumbs.db
 data/*.pdf
+!data/source.pdf
 data/*.txt
 data/faiss_index/
 *.index
