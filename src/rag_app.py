@@ -14,6 +14,8 @@ from sentence_transformers import SentenceTransformer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+# Hide the HTTP request logs of the Ollama client
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 # Constants
 PDF_PATH = "data/source.pdf"
@@ -142,8 +144,9 @@ class Assistant:
         """
         if with_examples:
             task = (
-                f"the user is not sure about {TOPICS[topic]}. Help them choose: take two or three "
-                'options from the background knowledge and ask "Would you like A, B or C?"'
+                f"the user is not sure about {TOPICS[topic]}. Help them choose: ask one question that "
+                "names two or three options from the background knowledge in one sentence, "
+                'for example "Would you prefer X, Y or Z?"'
             )
         else:
             task = f"ask the user about {TOPICS[topic]}."
