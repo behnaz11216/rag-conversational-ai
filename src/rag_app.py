@@ -45,9 +45,14 @@ TOPICS = {
 EXTRACT_PROMPT = """The user was asked about {topic}.
 User's answer: "{answer}"
 
+What we already know about the project:
+{known}
+
 Return JSON with two keys:
 "value": the part of the answer that is about {topic}, in the user's own words
-"is_clear": true if the user gave an answer, false if the user is not sure, asks for help or did not answer
+"is_clear": true only if the answer really tells us {topic}.
+false if the user is not sure, asks for help, or the answer is about something else
+(for example, it only repeats something we already know).
 """
 
 QUESTION_PROMPT = """You are a friendly assistant who helps small business owners plan their website.
@@ -117,7 +122,7 @@ class Assistant:
         Ask the model which part of the answer is about the topic,
         and if the user really answered or is not sure.
         """
-        prompt = EXTRACT_PROMPT.format(topic=TOPICS[topic], answer=answer)
+        prompt = EXTRACT_PROMPT.format(topic=TOPICS[topic], answer=answer, known=self.known_details())
         try:
             result = json.loads(self.extract_llm.invoke(prompt))
         except Exception as e:
@@ -129,6 +134,11 @@ class Assistant:
 
         # If the user answers with a question, they need help first.
         if answer.endswith("?"):
+            is_clear = False
+
+        # The same answer as for another question is probably a mistake.
+        saved_answers = [v.lower() for v in self.project_details.values() if v]
+        if answer.lower() in saved_answers:
             is_clear = False
 
         # Small models sometimes change or add words.
@@ -144,8 +154,8 @@ class Assistant:
         """
         if with_examples:
             task = (
-                f"the user is not sure about {TOPICS[topic]}. Help them choose: ask one question that "
-                "names two or three options from the background knowledge in one sentence, "
+                f"the user's last answer did not clearly tell us {TOPICS[topic]}. Help them: ask one question that "
+                "names two or three short options from the background knowledge in one sentence, "
                 'for example "Would you prefer X, Y or Z?"'
             )
         else:
@@ -169,7 +179,8 @@ class Assistant:
         else:
             reply = ""
 
-        if not reply or len(reply.split()) > 60:
+        if not reply or len(reply.split()) > 80:
+            logging.info("The generated question was not usable, using a fixed question.")
             reply = f"Could you tell me more about {TOPICS[topic]}? 😊"
         return reply
 
